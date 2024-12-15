@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide Viewer with Grok Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="prompt-icon" id="promptIcon">
+            <img src="prompt-icon.png" alt="Prompt Icon">
+            <span>Prompt</span>
+        </div>
+        <div class="video-icon" id="videoIcon">
+            <img src="video-icon.png" alt="Video Icon">
+            <span>Video</span>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="top-bar">
+            <div class="nav-buttons">
+                <button id="prev-btn">&#8592; Previous</button>
+                <button id="next-btn">Next &#8594;</button>
+            </div>
+            <h1 id="slide-title">Slide Viewer</h1>
+        </div>
+        <div class="main">
+            <div class="content">
+                <img id="slide-image" src="images/01_mg.png" alt="Slide Image">
+                <div class="prompt-box" id="promptBox">
+                    <textarea id="promptText"></textarea>
+                    <button id="queryButton">Query Grok</button>
+                </div>
+                <div class="response-box" id="responseBox">
+                    <div id="responseContent"></div>
+                </div>
+            </div>
+        </div>
+        <div class="video-overlay" id="videoOverlay" style="display: none;">
+            <iframe id="videoPlayer" src="" allowfullscreen></iframe>
+            <button class="close-button" id="closeVideo">×</button>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = "https://api.x.ai/v1";
+        const API_KEY = "xai-hOb0j9QUXVVQMe86ULxWrvyWQQm2LqnWVdxh5hanvqsiVDsXcSPY9EA7YAM5uLCXaThgJscWxxFCHJFy";
+
+        // DOM elements
+        const slideTitle = document.getElementById('slide-title');
+        const slideImage = document.getElementById('slide-image');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const promptBox = document.getElementById('promptBox');
+        const promptText = document.getElementById('promptText');
+        const responseBox = document.getElementById('responseBox');
+        const responseContent = document.getElementById('responseContent');
+        const promptIcon = document.getElementById('promptIcon');
+        const videoIcon = document.getElementById('videoIcon');
+        const videoOverlay = document.getElementById('videoOverlay');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const closeVideo = document.getElementById('closeVideo');
+        const queryButton = document.getElementById('queryButton');
+
+        let slides = [];
+        let currentIndex = 0;
+
+        // Define agentic workers
+        const agents = [
+            {
+                name: "Zoe Kim",
+                systemMessage: `
+                    You are Zoe Kim, a Software Engineer specializing in full-stack development. 
+                    Discuss application development requirements in 1-2 sentences.
+                `,
+            },
+            {
+                name: "Alex Patel",
+                systemMessage: `
+                    You are Alex Patel, a DevOps Engineer focusing on CI/CD pipelines. 
+                    Respond to Zoe’s suggestions in 1-2 sentences and discuss infrastructure adjustments.
+                `,
+            },
+            {
+                name: "Jack Dawson",
+                systemMessage: `
+                    You are Jack Dawson, a QA and SRE specializing in system reliability. 
+                    Provide concise feedback on Alex’s design in 1-2 sentences, addressing risks or gaps.
+                `,
+            },
+        ];
+
+        async function fetchSlides() {
+            try {
+                const response = await fetch('slide_config.json');
+                const data = await response.json();
+                slides = data.slides;
+                loadSlide(currentIndex);
+            } catch (error) {
+                console.error('Error loading slides:', error);
+            }
+        }
+
+        function loadSlide(index) {
+            if (!slides.length) return;
+            const slide = slides[index];
+            slideTitle.textContent = slide.id.replace('_', ' ');
+            slideImage.src = slide.image;
+
+            // Clear prompt and Grok info
+            promptBox.style.display = 'none';
+            responseBox.style.display = 'none';
+            responseContent.innerHTML = '';
+
+            // Reset video player
+            videoPlayer.src = '';
+        }
+
+        prevBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+            loadSlide(currentIndex);
+        });
+
+        nextBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex + 1) % slides.length;
+            loadSlide(currentIndex);
+        });
+
+        promptIcon.addEventListener('click', () => {
+            const slideText = slides[currentIndex]?.text || "No prompt text available.";
+            promptBox.style.display = promptBox.style.display === 'block' ? 'none' : 'block';
+            promptText.value = slideText; // Set prompt text from the slide config
+        });
+
+        videoIcon.addEventListener('click', () => {
+            const videoURL = slides[currentIndex]?.video || '';
+            if (videoURL) {
+                videoPlayer.src = videoURL;
+                videoOverlay.style.display = 'flex';
+            }
+        });
+
+        closeVideo.addEventListener('click', () => {
+            videoOverlay.style.display = 'none';
+            videoPlayer.src = '';
+        });
+
+        queryButton.addEventListener('click', async () => {
+            const userPrompt = promptText.value.trim();
+            if (!userPrompt) return;
+
+            responseBox.style.display = "block";
+            responseContent.innerHTML = "Loading...";
+
+            try {
+                let conversationLog = [];
+                const numIterations = 2; // Number of back-and-forth interactions
+
+                for (let iteration = 0; iteration < numIterations; iteration++) {
+                    for (const agent of agents) {
+                        const response = await fetch(`${BASE_URL}/chat/completions`, {
+                            method: "POST",
+                            headers: {
+                                "Authorization": `Bearer ${API_KEY}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                model: "grok-beta",
+                                messages: [
+                                    { role: "system", content: agent.systemMessage },
+                                    { role: "user", content: userPrompt },
+                                    ...conversationLog.map((log) => ({
+                                        role: "assistant",
+                                        content: log.response,
+                                    })),
+                                ],
+                            }),
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`Error: ${response.statusText}`);
+                        }
+
+                        const data = await response.json();
+                        const agentResponse = data.choices?.[0]?.message?.content || "Unexpected API response.";
+                        conversationLog.push({
+                            agent: agent.name,
+                            response: agentResponse,
+                        });
+
+                        // Append response with styled agent name
+                        responseContent.innerHTML += `
+                            <p><span class="agent-name">${agent.name}:</span> ${agentResponse}</p>
+                        `;
+                    }
+                }
+            } catch (error) {
+                responseContent.textContent = `Error: ${error.message}`;
+            }
+        });
+
+        fetchSlides();
+    </script>
+</body>
+</html>

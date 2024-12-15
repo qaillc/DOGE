@@ -1,0 +1,60 @@
+{
+    "slides": [
+        {
+            "id": "Azure Pipelines",
+            "image": "images/01_mg.png",
+            "action": "nct",
+            "text": "Explore Azure Pipelines.",
+            "video": "https://www.youtube.com/embed/R74bm8IGu2M"
+        },
+        {
+            "id": "Concept of Pipelines",
+            "image": "images/02_mg.png",
+            "action": "dcs",
+            "text": "Explore the concept of pipelines in DevOps.",
+            "video": "https://www.youtube.com/embed/YMdtaWfU_QE"
+        },
+        {
+            "id": "Describe Pipelines",
+            "image": "images/03_mg.png",
+            "action": "dsc",
+            "text": "Describe Azure Pipelines.",
+            "video": "https://www.youtube.com/embed/YMdtaWfU_QE"
+        },
+        {
+            "id": "Pipeline Key Terms",
+            "image": "images/04_mg.png",
+            "action": "wsc",
+            "text": "Write simple pipeline code use ARM.",
+            "video": "https://www.youtube.com/embed/YMdtaWfU_QE"
+        },
+        {
+            "id": "Agents and Pools",
+            "image": "images/05_mg.png",
+            "action": "None",
+            "text": "Disucss Agents and Pools.",
+            "video": "https://www.youtube.com/embed/YMdtaWfU_QE"
+        },
+        {
+            "id": "Microsoft vs Self-Hosted",
+            "image": "images/06_mg.png",
+            "action": "None",
+            "text": "Disucss DevOps Microsoft vs Self-Hosted.",
+            "video": "https://www.youtube.com/embed/YMdtaWfU_QE"
+        },
+        {
+            "id": "Job Types",
+            "image": "images/07_mg.png",
+            "action": "None",
+            "text": "Discuss Azure Job Types.",
+            "video": "https://www.youtube.com/embed/YMdtaWfU_QE"
+        },
+        {
+            "id": "Agent Pools",
+            "image": "images/08_mg.png",
+            "action": "None",
+            "text": "Discuss Azure Agent Pools.",
+            "video": "https://www.youtube.com/embed/YMdtaWfU_QE"
+        }
+    ]
+}
